@@ -11,13 +11,13 @@
 
 - **Logic:** check credentials will listen to incoming POST calls and read input as json, check input.
 
-- If username and password: Password will then hash sha256, salted (With key saved in MySQL) and encoded with Base64. The script will then check with the saved username and password in the MySQL database to check if right. if right it will generate a new session_key. Save it to MySQL for a time period and return it to the caller via json.
+    If username and password: Password will then hash sha256, salted (With key saved in MySQL) and encoded with Base64. The script will then check with the saved username and password in the MySQL database to check if right. if right it will generate a new session_key. Save it to MySQL for a time period and return it to the caller via json.
 
-- If session_key: It will check with saved session_keys from MySQL database. if right. it will simply return session_key.
+    If session_key: It will check with saved session_keys from MySQL database. if right. it will simply return session_key.
 
-- If None: do nothing
+    If None: do nothing
 
-- If invalid session_key, username/password: return a invalid package.
+    If invalid session_key, username/password: return a invalid package.
 
 **Sub modules**
 - ArkControllerHasher

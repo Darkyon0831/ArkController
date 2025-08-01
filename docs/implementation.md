@@ -24,4 +24,11 @@
 - MySQL
 
 # DashBoard Page (Front-End)
-- **Design** A view for all different ark servers, a server will have a information card with a image (with default backup) and basic information about the server
+- **Design:** A view for all different ark servers, a server will have a information card with a image (with default backup) and basic information about the server. the server cards will be stacked verticality and vary between a gray and dark gray background color. It will also have a special view if card is under a set size (To support mobile view).
+
+- **Logic:** Frontend will fetch the neccassary data from the ArkControllerQuery Websocket api and show them on the card, Each server card will have a stop, restart and modify button. The stop server will query ArkControllerQuery Websocket api to stop the server, the restart will do the same but restart and the modify button will open a seperate modify page to modify server.
+
+**Sub modules**
+- ArkControllerQuery Websocket api
+
+# Modify server page (Front-End)

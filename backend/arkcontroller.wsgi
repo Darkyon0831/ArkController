@@ -6,6 +6,7 @@ import os
 
 # Add your project directory to Python path
 sys.path.insert(0, "/var/www/html/ArkController/backend/")
+sys.path.insert(0, "/var/www/html/ArkController/backend/venv/lib/python3.10/site-packages")
 
 from check_credentials import credentials_bp
 

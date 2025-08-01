@@ -22,3 +22,6 @@
 **Sub modules**
 - ArkControllerHasher
 - MySQL
+
+# DashBoard Page (Front-End)
+- **Design** A view for all different ark servers, a server will have a information card with a image (with default backup) and basic information about the server

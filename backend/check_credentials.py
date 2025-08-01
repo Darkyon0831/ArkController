@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, Blueprint
 from flask_cors import CORS
 import ark_hasher
 import secrets
-
+from datetime import datetime, timedelta
 import mysql.connector
 
 # Create blueprint
@@ -11,7 +11,7 @@ credentials_bp = Blueprint('credentials', __name__)
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'ArkUser',
-    'password': 'HeRMan40513212!?',
+    'password': 'HeRman40513212!?',
     'database': 'ArkControllerData'
 }
 
@@ -23,9 +23,9 @@ def get_db_connection():
         print(f"Error: {err}")
         return None
 
-def verify_pasword(password, hash):
+def verify_password(password, hash):
     try:
-        return ark_hasher.verify_password(password, hash)
+        return ark_hasher.PasswordHasher.verify_password(password, hash)
     except Exception as e:
         print(f"Error verifying password: {e}")
         return False
@@ -42,18 +42,24 @@ def check_credentials():
 
     connection = get_db_connection()
 
-    if username and password amd not session_key:
+    if username and password and not session_key:
         if connection:
             cursor = connection.cursor()
             cursor.execute("SELECT id, username, password_hash FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
             
-            if user and verify_password(password, user['password_hash']):
-                # Valid credentials
-                user_id = user['id']
+            if user and verify_password(password, user[2]):
+                user_id = user[0]
                 session_key = generate_session_key()
                 expires_at = datetime.now() + timedelta(minutes=15)
-                cursor.execute("INSERT INTO user_sessions (user_id, session_key, expires_at) VALUES (%s, %s, %s)", (user_id, session_key, expires_at))
+
+                cursor.execute("SELECT user_id FROM user_sessions WHERE user_id = %s", (user_id,))
+                existing_session = cursor.fetchone()
+                if existing_session:
+                    cursor.execute("UPDATE user_sessions SET session_key = %s, expires_at = %s WHERE user_id = %s", (session_key, expires_at, user_id))
+                else:
+                    cursor.execute("INSERT INTO user_sessions (user_id, session_key, expires_at) VALUES (%s, %s, %s)", (user_id, session_key, expires_at))
+
                 connection.commit()
 
                 cursor.close()
@@ -63,13 +69,13 @@ def check_credentials():
                 return jsonify({"status": 0, "message": "Invalid credentials"}), 401
         else:
             return jsonify({"status": 0, "message": "Database connection error"}), 500
-    elif session_key and username:
+    elif session_key:
         if connection:
             cursor = connection.cursor()
-            cursor.execute("SELECT session_key FROM user_sessions WHERE user_id = (SELECT id FROM users WHERE username = %s)", (username,))
+            cursor.execute("SELECT user_id FROM user_sessions WHERE session_key = %s AND expires_at > NOW()", (session_key,))
             data = cursor.fetchone()
 
-            if data[0] == session_key:
+            if data:
                 cursor.close()
                 connection.close()
                 return jsonify({"status": 1, "message": "Session valid"}), 200
@@ -89,7 +95,7 @@ def favicon():
 # Create app for standalone testing
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins=['http://localhost:3000', 'https://www.darkyon.com'])
     app.register_blueprint(credentials_bp)
     return app
 

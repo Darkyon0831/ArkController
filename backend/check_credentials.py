@@ -88,10 +88,6 @@ def check_credentials():
     else:
         return jsonify({"status": 0, "message": "Invalid request"}), 400
 
-@credentials_bp.route('/favicon.ico')
-def favicon():
-    return '', 204
-
 # Create app for standalone testing
 def create_app():
     app = Flask(__name__)

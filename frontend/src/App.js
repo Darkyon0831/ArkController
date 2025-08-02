@@ -1,34 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import "./App.css";
+import "./LoginPage.css";
+import arkControllerLogo from './ark_controller_logo.png';
 
 function App() {
-  const sessionKey = null;
+  const [sessionKey, setSessionKey] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (sessionKey) 
-  {
-    // If session key exists, redirect to the main application
+  // Use useEffect to handle async session check
+  useEffect(() => {
+    const checkSession = async () => {
+      const result = await TrySessionKey();
+      setSessionKey(result);
+      setIsLoading(false);
+    };
+    
+    checkSession();
+  }, []);
+
+  console.log('Session Key:', sessionKey);
+
+  // Show loading while checking session
+  if (isLoading) {
     return (
-      <div className="app">
-        <h1>Welcome to the ArkController</h1>
-        {/* Main application components can be added here */}
+      <div className="loading-container">
+        <h2>Loading...</h2>
       </div>
     );
   }
-  else 
-  {
+
+  if (sessionKey) {
+    // If session key exists, redirect to the main application
+    return (
+      <div className="app">
+        <ServerCard server={{
+          name: "Example Server",
+          status: "Online",
+          players: 10,
+          maxPlayers: 20,
+          map: "The Island",
+          uptime: "2 days",
+          version: "1.0.0"
+        }} />
+        <button onClick={() => {
+          localStorage.removeItem('session_key');
+          setSessionKey(null);
+        }}>
+          Logout
+        </button>
+        {/* Main application components can be added here */}
+      </div>
+    );
+  } else {
     // If no session key, show the login page
     return (
-      <ServerCard server={{name: "The Island - PvP", status: "Online", players: 15, maxPlayers: 50, map: "The Island", uptime: "2d 14h 23m", version: "v346.32"}} />
+      <LoginPageNice onLoginSuccess={setSessionKey} />
     );
   }
 }
 
-
 const TrySessionKey = async () => {
   const sessionKey = localStorage.getItem('session_key');
+
   if (sessionKey) 
   {
-    const response = await fetch('/check_credentials', {
+    const response = await fetch('https://ark.darkyon.com/api/check_credentials', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,6 +73,8 @@ const TrySessionKey = async () => {
     });
 
     const data = await response.json();
+
+    console.log('Session Key Check Response:', data);
 
     if (data.status === 1) 
     {
@@ -52,54 +90,6 @@ const TrySessionKey = async () => {
   {
     return null;
   }
-}
-
-function LoginPage() {
-
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-
-  const onclick = async() => {
-    const response = await fetch('https://www.darkyon.com/api/check_credentials', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.status === 1) 
-    {
-      console.log('Login successful');
-      console.log('Session Key:', data.session_key);
-      localStorage.setItem('session_key', data.session_key);
-    } 
-    else
-    {
-      console.error('Login failed:', data.message);
-      setUsername('');
-      setPassword('');
-      localStorage.removeItem('session_key'); // Clear session key on failure
-    }
-  }
-
-  return (
-    <>
-      <div className="login-page">
-        <div className="login-window">
-          <h2>Login</h2>
-          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <button onClick={onclick}>Login</button>
-        </div>
-      </div>
-    </>
-  );
 }
 
 function ServerCard({ server })
@@ -148,6 +138,58 @@ function ServerCard({ server })
             Stop
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPageNice({ onLoginSuccess }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const onclick = async() => {
+    const response = await fetch('https://ark.darkyon.com/api/check_credentials', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.status === 1) 
+    {
+      console.log('Login successful');
+      console.log('Session Key:', data.session_key);
+      localStorage.setItem('session_key', data.session_key);
+      onLoginSuccess(data.session_key); 
+      setUsername('');
+      setPassword('');
+    } 
+    else
+    {
+      console.error('Login failed:', data.message);
+      setUsername('');
+      setPassword('');
+      localStorage.removeItem('session_key'); // Clear session key on failure
+    }
+  }
+
+  return (
+    <div className="login_page_background">
+      <div className='login_page_header'>
+        <img src={arkControllerLogo} alt="ArkController Logo" className="login_page_logo" />
+      </div>
+      <div className="login_page_container">
+        <p className="login_page_username_p">Username</p>
+        <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
+        <p className="login_page_password_p">Password</p>
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button className="login_button" onClick={onclick}>LOG IN</button>
       </div>
     </div>
   );
